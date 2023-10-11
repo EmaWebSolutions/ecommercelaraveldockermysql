@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  # Laravel PHP-FPM service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-app
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      - DB_HOST=mysql  # Use the service name as the host
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+    entrypoint: ./entrypoint.sh
+    depends_on:
+      - mysql  # Ensure that the app depends on mysql
+
+  # Nginx service
+  nginx:
+    image: nginx:latest
+    container_name: laravel-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - .:/var/www/html
+    depends_on:
+      - app
+
+  # MySQL service
+  mysql:
+    image: mysql:5.7  # Corrected version tag to 5.7
+    container_name: laravel-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
